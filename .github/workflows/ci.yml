@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-test:
+    name: Lint & Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install ruff mypy pytest pytest-cov
+
+      - name: Ruff (lint)
+        run: ruff check backend tests eval
+
+      - name: Ruff (format check)
+        run: ruff format --check backend tests eval
+
+      - name: Mypy (type check)
+        run: mypy backend/app
+        continue-on-error: true   # Phase 0 は warn-only、Phase 1 で enforce に切替
+
+      - name: Pytest
+        env:
+          KLING_ENABLED: "false"
+          CONSENT_LEVEL: "1"
+          ANON_SALT: "ci-dummy-salt-do-not-use-in-prod"
+        run: pytest tests -v --cov=backend/app --cov-report=term-missing
+
+  workflow-validation:
+    name: ComfyUI Workflow JSON validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate workflow JSON
+        run: |
+          python3 - <<'EOF'
+          import json, pathlib, sys
+          ok = True
+          for p in pathlib.Path("comfyui/workflows").glob("*.json"):
+              try:
+                  json.loads(p.read_text())
+                  print(f"OK   {p}")
+              except Exception as e:
+                  print(f"FAIL {p}: {e}")
+                  ok = False
+          sys.exit(0 if ok else 1)
+          EOF

@@ -1,0 +1,27 @@
+# MyHome Vision コードオーナー設定
+#
+# この行は、指定されたパスに対する PR に自動的にレビュワーを割り当てるためのものです。
+# 末尾の行ほど優先度が高くなります（最後にマッチしたルールが採用されます）。
+#
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# デフォルト: リポジトリ全体
+*                                  @sisuiss
+
+# バックエンド / プロバイダー抽象
+/backend/                          @sisuiss
+/backend/app/providers/            @sisuiss
+/backend/app/core/circuit_breaker.py @sisuiss
+
+# ComfyUI ワークフロー
+/comfyui/                          @sisuiss
+
+# 品質評価
+/eval/                             @sisuiss
+
+# テスト
+/tests/                            @sisuiss
+
+# CI / リポジトリメタ
+/.github/                          @sisuiss
+/scripts/                          @sisuiss

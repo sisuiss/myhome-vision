@@ -1,0 +1,43 @@
+{
+  "_comment": "MyHome Vision: 朝のコーヒー シーン ComfyUI ワークフロー雛形。PoC W1 で MimicMotion + AnimateDiff のノード構成に差し替える。",
+  "_version": "0.0.1",
+  "_placeholders": {
+    "base_video_path": "${BASE_VIDEO_PATH}",
+    "motion_ref_path": "${MOTION_REF_PATH}",
+    "subject_reference_images": "${SUBJECT_REFS}",
+    "output_resolution": "720p",
+    "seed": "${SEED}"
+  },
+  "nodes": {
+    "1": {"class_type": "LoadVideo", "inputs": {"path": "${BASE_VIDEO_PATH}"}},
+    "2": {"class_type": "LoadVideo", "inputs": {"path": "${MOTION_REF_PATH}"}},
+    "3": {"class_type": "LoadImageBatch", "inputs": {"paths": "${SUBJECT_REFS}"}},
+    "4": {
+      "class_type": "MimicMotionFullBody",
+      "inputs": {
+        "base": ["1", 0],
+        "motion": ["2", 0],
+        "subjects": ["3", 0],
+        "resolution": "720p",
+        "steps": 20,
+        "seed": "${SEED}"
+      }
+    },
+    "5": {
+      "class_type": "AnimateDiffRefine",
+      "inputs": {"frames": ["4", 0], "strength": 0.35}
+    },
+    "6": {
+      "class_type": "ComposeWithBase",
+      "inputs": {"base": ["1", 0], "subject_layer": ["5", 0], "zorder": "auto"}
+    },
+    "7": {
+      "class_type": "VideoEncode",
+      "inputs": {"frames": ["6", 0], "codec": "h264", "fps": 30}
+    },
+    "8": {
+      "class_type": "SaveVideo",
+      "inputs": {"video": ["7", 0], "filename_prefix": "myhomevision_morning_coffee"}
+    }
+  }
+}
